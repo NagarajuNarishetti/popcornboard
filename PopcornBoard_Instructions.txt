@@ -1,0 +1,225 @@
+
+PROJECT NAME: PopcornBoard
+
+DESCRIPTION:
+Build a full-stack web application named **PopcornBoard**. The app is a fun, user-driven movie suggestion platform where users can post movies they recommend, see suggestions by others, and manage their own list. It should resemble a digital "poster wall" with suggestions.
+
+The application must be built using **Next.js (App Router)** for both frontend and backend and use **Keycloak** for authentication. All components must be containerized using **Docker** and orchestrated with **docker-compose**.
+
+Additionally, integrate an external API (such as the OMDb API or TMDb API) to fetch movie data (title, poster image, release year, etc.) automatically when users enter a movie name.
+
+---
+
+🚀 CORE FEATURES:
+
+1. **Landing Page**
+   - Publicly visible.
+   - Styled like a digital poster or movie wall.
+   - Each section shows a username and the list of movies they have suggested (with title + poster image).
+   - Top-right corner: "Login / Sign Up" button (handled by Keycloak).
+   - If user is logged in, show "Add Movie", username, and "Logout".
+
+2. **Authentication & Authorization**
+   - Use **Keycloak** for user login and management.
+   - Each user can only add, edit, or delete their own suggestions.
+   - Show “Add Movie” only if the user is logged in.
+   - Only logged-in users can post suggestions.
+
+3. **Movie Suggestion Functionality**
+   - Movie contains: `title`, `image`, `suggestedBy` (username or user ID), and `timestamp`.
+   - Users can:
+     - Add new movie (by typing movie name — fetched from external API)
+     - Edit or delete their own movies
+   - Other users can view but not modify others’ movies.
+
+4. **Movie Data API Integration**
+   - Use OMDb API (https://www.omdbapi.com/) or TMDb (https://www.themoviedb.org/documentation/api) to get movie info.
+   - Required API key should be stored in `.env.local` and injected into backend requests.
+   - Allow user to search by title, auto-fetch image, year, etc.
+
+---
+
+🧰 TECH STACK:
+
+- **Frontend & Backend**: Next.js 14+ (App Router)
+- **Authentication**: Keycloak (OIDC)
+- **Database**: MongoDB (local via Docker or Atlas)
+- **ORM**: Mongoose
+- **Styling**: Tailwind CSS
+- **API**: Next.js API routes or route handlers
+- **Auth Session**: next-auth with Keycloak Provider
+- **Movie API**: OMDb or TMDb API (with key)
+- **Deployment**: Docker + Docker Compose
+- **Runtime**: Node.js 18+
+
+---
+
+🔐 KEYCLOAK SETUP:
+
+- Run Keycloak as a Docker container.
+- Realm: `myrealm`
+- Client:
+  - ID: `nextjs-client`
+  - Protocol: `openid-connect`
+  - Redirect URI: `http://localhost:3000/api/auth/callback/keycloak`
+  - Enable Standard + Implicit flow.
+- Create 1–2 test users with passwords.
+
+---
+
+📦 DATABASE SCHEMA (MongoDB using Mongoose):
+
+```js
+// lib/models/Movie.js
+const movieSchema = new mongoose.Schema({
+  title: String,
+  image: String,
+  suggestedBy: String, // Keycloak user ID or email
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+})
+```
+
+---
+
+📂 FOLDER STRUCTURE (Simplified)
+
+```
+PopcornBoard/
+│
+├── app/                    # App Router pages and routes
+│   ├── page.tsx           # Home page
+│   └── api/
+│       └── movies/        # Movie API routes
+│           ├── route.ts   # GET, POST for movies
+│       └── auth/          # NextAuth with Keycloak
+│           └── [...nextauth]/route.ts
+│
+├── lib/
+│   └── db.ts              # MongoDB connection
+│   └── models/
+│       └── Movie.ts
+│
+├── public/
+├── styles/
+├── .env.local
+├── Dockerfile
+├── docker-compose.yml
+├── tailwind.config.js
+└── next.config.js
+```
+
+---
+
+📝 `.env.local` Template
+
+```
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=supersecretstring
+
+KEYCLOAK_CLIENT_ID=nextjs-client
+KEYCLOAK_CLIENT_SECRET=secret-from-keycloak
+KEYCLOAK_ISSUER=http://keycloak:8080/realms/myrealm
+
+MONGODB_URI=mongodb://mongo:27017/moviedb
+
+MOVIE_API_KEY=your_omdb_or_tmdb_api_key
+MOVIE_API_PROVIDER=omdb
+```
+
+---
+
+🐳 DOCKERFILE (for Next.js)
+
+```Dockerfile
+FROM node:18
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+---
+
+🐳 `docker-compose.yml`
+
+```yaml
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: popcornboard-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=supersecretstring
+      - KEYCLOAK_CLIENT_ID=nextjs-client
+      - KEYCLOAK_CLIENT_SECRET=client-secret
+      - KEYCLOAK_ISSUER=http://keycloak:8080/realms/myrealm
+      - MONGODB_URI=mongodb://mongo:27017/moviedb
+      - MOVIE_API_KEY=your_omdb_or_tmdb_api_key
+      - MOVIE_API_PROVIDER=omdb
+    depends_on:
+      - mongo
+      - keycloak
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.3
+    container_name: keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN=admin
+      KEYCLOAK_ADMIN_PASSWORD=admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+
+volumes:
+  mongo_data:
+  keycloak_data:
+```
+
+---
+
+💡 DESIGN NOTES
+
+- Use a card/grid layout for movie suggestions.
+- Each card contains:
+  - Movie title
+  - Poster image
+  - Suggested by username
+- Use Tailwind for responsive styling
+- Top-right nav bar: logo + login/signup or username/logout
+
+---
+
+✅ STEPS TO BUILD
+
+1. Initialize a Next.js 14+ app with App Router and Tailwind.
+2. Add Keycloak as OIDC provider using `next-auth` package.
+3. Connect to MongoDB using Mongoose.
+4. Create models and routes for Movies.
+5. Add route protection using session from `next-auth`.
+6. Integrate OMDb or TMDb API in `/api/movies/route.ts`.
+7. Style frontend using Tailwind.
+8. Write Dockerfile and docker-compose to run MongoDB, Keycloak, and Next.js together.
+9. Seed Keycloak with realm, client, and user if needed.
+10. Test app via `docker-compose up` at http://localhost:3000.
+
+🎯 GOAL: PopcornBoard should work locally via `docker-compose up`, and provide a full movie suggestion platform with login-based functionality and auto movie poster integration.
