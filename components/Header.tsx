@@ -17,7 +17,7 @@ export default function Header({ session }: HeaderProps) {
   const handleSignOut = async () => {
     try {
       // First, redirect to Keycloak logout to clear the Keycloak session
-      const keycloakLogoutUrl = 'http://localhost:8080/realms/myrealm/protocol/openid-connect/logout';
+      const keycloakLogoutUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_BASE_URL}/realms/popcornboard/protocol/openid-connect/logout`;
       const logoutParams = new URLSearchParams({
         client_id: 'nextjs-client',
         post_logout_redirect_uri: `${window.location.origin}/auth/logout`,
@@ -75,7 +75,7 @@ export default function Header({ session }: HeaderProps) {
                 <button
                   onClick={() => {
                     // Redirect directly to Keycloak registration
-                    const keycloakUrl = 'http://localhost:8080/realms/myrealm/login-actions/registration?client_id=nextjs-client';
+                    const keycloakUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_BASE_URL}/realms/popcornboard/login-actions/registration?client_id=nextjs-client`;
                     window.location.href = keycloakUrl;
                   }}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"

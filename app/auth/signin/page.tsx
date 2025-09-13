@@ -156,7 +156,7 @@ export default function SignIn() {
             Don't have an account?{' '}
             <button
               onClick={() => {
-                const keycloakUrl = 'http://localhost:8080/realms/myrealm/login-actions/registration?client_id=nextjs-client';
+                const keycloakUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_BASE_URL}/realms/popcornboard/login-actions/registration?client_id=nextjs-client`;
                 window.location.href = keycloakUrl;
               }}
               className="text-blue-400 hover:text-blue-300 underline bg-transparent border-none cursor-pointer"
